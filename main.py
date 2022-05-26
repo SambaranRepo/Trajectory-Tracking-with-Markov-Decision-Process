@@ -109,7 +109,7 @@ if __name__ == '__main__':
         print(cur_iter)
         print(t2-t1)
         times.append(t2-t1)
-        error = error + np.linalg.norm(cur_state - cur_ref)
+        error = error + np.linalg.norm(cur_state - cur_ref[1])
         cur_iter = cur_iter + 1
 
     main_loop_time = time()
