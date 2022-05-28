@@ -2,7 +2,8 @@ from time import time
 import numpy as np
 from utils import visualize
 from controller import *
-
+import itertools as it
+import pickle
 # Simulation params
 np.random.seed(10)
 time_step = 0.5 # time between steps in seconds
@@ -75,7 +76,25 @@ if __name__ == '__main__':
     # Initialize state
     cur_state = np.array([x_init, y_init, theta_init])
     cur_iter = 0
+    t = np.arange(0,51,0.5)
+    t = t[:-1]
+    e_x = [-3,-1,-0.5,-0.25,-0.125,-0.05,0.05, 0.125,0.25, 0.5,1,3]
+    e_y = e_x
+    th = [-np.pi, -np.pi/3, -np.pi/12, -np.pi/48,-np.pi/96,np.pi/96,np.pi/48,np.pi/12,np.pi/3,np.pi]
+    X = list(it.product(t,e_x,e_y, th))
+    n_states = len(X)
+    print(f'State space : {n_states}')
+    state_table = {}
+    for i in range(n_states):
+        state_table.update({X[i]:i})
+    v = np.linspace(0,1,5)
+    w = np.linspace(-1,1,10)
+    U = list(it.product(v,w))
     # Main loop
+    with open('pi.pkl', 'rb') as f:
+        pi = pickle.load(f)[0]
+
+    print(pi)
     while (cur_iter * time_step < sim_time):
         t1 = time()
         # Get reference state
@@ -87,12 +106,20 @@ if __name__ == '__main__':
         # Save current state and reference state for visualization
         ref_traj.append(cur_ref[0])
         car_states.append(cur_state)
-
+        error = cur_state - cur_ref[0]
+        error[2] = (error[2] + np.pi) % (2 * np.pi) - np.pi
+        error_x = e_x[np.argmin(np.abs(error[0] - e_x))]
+        error_y = e_y[np.argmin(np.abs(error[1] - e_y))]
+        error_th = th[np.argmin(np.abs(error[2] - th))]
+        index = state_table[((cur_iter*time_step) %50, error_x, error_y, error_th)]
+        print(index)
+        print(pi[index])
         ################################################################
         # Generate control input
         # TODO: Replace this simple controller with your own controller
         # control = simple_controller(cur_state, cur_ref[0])
-        control = casadi_controller(cur_state, cur_ref)
+        # control = casadi_controller(cur_state, cur_ref)
+        control = U[pi[index]]
         v = control[0]
         w = control[1]
         v = np.clip(v, v_min, v_max)
