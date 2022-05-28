@@ -24,21 +24,21 @@ t = t[:-1]
 # e_x = [-3,-2] + list(np.linspace(-1,1,10)) + [2,3]
 # e_y = e_x
 # th = list(np.linspace(-np.pi,-np.pi/30, 3)) + list(np.linspace(-np.pi/60, np.pi/60, 6)) + list(np.linspace(np.pi/30, np.pi,3))
-e_x= np.linspace(-3,3,5)
-e_y = e_x
-# print(f'e_x : {e_x}')
-th = np.linspace(-np.pi, np.pi, 10)
-X = list(it.product(t,e_x,e_y, th))
-# e_x = [-3,-1,-0.5,-0.25,-0.125,-0.05,0.05, 0.125,0.25, 0.5,1,3]
+# e_x= np.linspace(-3,3,8)
 # e_y = e_x
-# th = [-np.pi, -np.pi/3, -np.pi/12, -np.pi/48,-np.pi/96,np.pi/96,np.pi/48,np.pi/12,np.pi/3,np.pi]
+# # print(f'e_x : {e_x}')
+# th = np.linspace(-np.pi, np.pi, 10)
 # X = list(it.product(t,e_x,e_y, th))
+e_x = [-3,-1,-0.5,-0.2,0.2, 0.5,1,3]
+e_y = e_x
+th = [-np.pi, -np.pi/2, -np.pi/4, -np.pi/16,-np.pi/64,np.pi/64,np.pi/16,np.pi/4,np.pi/2,np.pi]
+X = list(it.product(t,e_x,e_y, th))
 n_states = len(X)
 print(f'State space : {n_states}')
 state_table = {}
 for i in range(n_states):
     state_table.update({X[i]:i})
-v = np.linspace(0,1,8)
+v = np.linspace(0,1,10)
 w = np.linspace(-1,1,10)
 U = list(it.product(v,w))
 n_controlspace = len(U)
@@ -77,7 +77,7 @@ def error_dynamics(e, u,t, ref = cur_ref):
     ref_diff = np.array([[ref[t][0] - ref[t+1][0]], [ref[t][1] - ref[t+1][1]], [(ref[t][2] -  ref[t+1][2] + np.pi) % (2*np.pi) - np.pi]])
 #     print(f'e shape : {e.shape}')
     next_error = e[:,None] + G @ np.array([[u[0]], [u[1]]]) + ref_diff
-    next_error[2] = (next_error[2] + np.pi)%(2*np.pi) - np.pi
+    # next_error[2] = (next_error[2] + np.pi)%(2*np.pi) - np.pi
 #     print(f'next error : {next_error}')
     next_x, next_y, next_th = next_error[0][0], next_error[1][0], next_error[2][0]
     # print(f'next errors : {next_x, next_y, next_th}')
@@ -120,9 +120,9 @@ def step_cost(e, u, t, ref = cur_ref):
     : given the current error and the control
     : compute the step cost defined as the sum of tracking errors and control effort
     '''
-    Q = 10* np.eye(2)
-    q = 10
-    R = 6 * np.eye(2)
+    Q = 4* np.eye(2)
+    q = 3
+    R = 2 * np.eye(2)
     p = e[:2]
     th = e[-1]
     u = np.array([[u[0]],[u[1]]])
@@ -145,12 +145,10 @@ data = []
 def create_P(i):
     e = np.array(X[i][1:])
     t = int(X[i][0]//0.5)
-    p = np.zeros((n_controlspace, n_states))
     for j in range(n_controlspace):
         next_states, pr = error_dynamics(e,U[j],t)
 #         print(f'probs : {pr}')
         for k in range(len(next_states)):
-            p[j,next_states[k]] = pr[k]
             coords1.append(i)
             coords2.append(j)
             coords3.append(next_states[k])

@@ -78,18 +78,24 @@ if __name__ == '__main__':
     cur_iter = 0
     t = np.arange(0,51,0.5)
     t = t[:-1]
-    e_x = [-3,-1,-0.5,-0.25,-0.125,-0.05,0.05, 0.125,0.25, 0.5,1,3]
+    e_x= np.linspace(-3,3,8)
     e_y = e_x
-    th = [-np.pi, -np.pi/3, -np.pi/12, -np.pi/48,-np.pi/96,np.pi/96,np.pi/48,np.pi/12,np.pi/3,np.pi]
+    # print(f'e_x : {e_x}')
+    th = np.linspace(-np.pi, np.pi, 10)
     X = list(it.product(t,e_x,e_y, th))
+    # e_x = [-3,-1,-0.5,-0.25,-0.125,-0.05,0.05, 0.125,0.25, 0.5,1,3]
+    # e_y = e_x
+    # th = [-np.pi, -np.pi/3, -np.pi/12, -np.pi/48,-np.pi/96,np.pi/96,np.pi/48,np.pi/12,np.pi/3,np.pi]
+    # X = list(it.product(t,e_x,e_y, th))
     n_states = len(X)
     print(f'State space : {n_states}')
     state_table = {}
     for i in range(n_states):
         state_table.update({X[i]:i})
-    v = np.linspace(0,1,5)
+    v = np.linspace(0,1,4)
     w = np.linspace(-1,1,10)
     U = list(it.product(v,w))
+    n_controlspace = len(U)
     # Main loop
     with open('pi.pkl', 'rb') as f:
         pi = pickle.load(f)[0]
