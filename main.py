@@ -1,10 +1,12 @@
 from time import time
 from time import sleep
 import numpy as np
+from state_control_space import generate_control_space
 from utils import visualize
 from controller import *
 import itertools as it
 import pickle
+from state_control_space import *
 # Simulation params
 np.random.seed(10)
 time_step = 0.5 # time between steps in seconds
@@ -77,29 +79,15 @@ if __name__ == '__main__':
     # Initialize state
     cur_state = np.array([x_init, y_init, theta_init])
     cur_iter = 0
-    t = np.arange(0,51,0.5)
-    t = t[:-1]
-    e_x= [-3, -0.5] + list(np.linspace(-0.25, 0.25, 5)) + [0.5,3]
-    e_y = e_x
-    # print(f'e_x : {e_x}')
-    th = [-np.pi, -np.pi/2] + list(np.linspace(-np.pi/4, np.pi/4, 5)) + [np.pi/2, np.pi] 
-    X = list(it.product(t,e_x,e_y, th))
-    # e_x = [-3,-1,-0.5,-0.2,0.2, 0.5,1,3]
-    # e_y = e_x
-    # th = [-np.pi, -np.pi/2, -np.pi/4, -np.pi/16,-np.pi/64,np.pi/64,np.pi/16,np.pi/4,np.pi/2,np.pi]
-    # X = list(it.product(t,e_x,e_y, th))
-    n_states = len(X)
-    print(f'State space : {n_states}')
-    state_table = {}
-    for i in range(n_states):
-        state_table.update({X[i]:i})
-    v = np.linspace(0,1,5)
-    w = np.linspace(-1,1,10)
-    U = list(it.product(v,w))
-    n_controlspace = len(U)
-    # Main loop
+    # X,e_x,e_y,th,state_table = generate_state_space()
+    # U = generate_control_space()
+    # # Main loop
+    # with open('pi.pkl', 'rb') as f:
+    #     pi = pickle.load(f)[0]
+
     with open('pi.pkl', 'rb') as f:
-        pi = pickle.load(f)[0]
+        results = pickle.load(f)
+        pi,X,e_x,e_y,th,state_table,U = results[0], results[1], results[2], results[3], results[4], results[5], results[6]
 
     print(pi)
     while (cur_iter * time_step < sim_time):

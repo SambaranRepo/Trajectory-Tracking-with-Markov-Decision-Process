@@ -5,6 +5,7 @@ from functools import wraps
 from concurrent.futures import ThreadPoolExecutor, thread
 import asyncio
 import itertools as it
+from state_control_space import *
 
 with open('partial_working_MDP.pkl', 'rb') as f:
     x = pickle.load(f)
@@ -18,26 +19,11 @@ def threadpool(f):
         return asyncio.wrap_future(executor.submit(f,*args, **kwargs))
     return wrap
 
-t = np.arange(0,51,0.5)
-t = t[:-1]
-e_x= [-3, -0.5] + list(np.linspace(-0.25, 0.25, 5)) + [0.5,3]
-e_y = e_x
-# print(f'e_x : {e_x}')
-th = [-np.pi, -np.pi/2] + list(np.linspace(-np.pi/4, np.pi/4, 5)) + [np.pi/2, np.pi] 
-X = list(it.product(t,e_x,e_y, th))
-# e_x = [-3,-1,-0.5,-0.2,0.2, 0.5,1,3]
-# e_y = e_x
-# th = [-np.pi, -np.pi/2, -np.pi/4, -np.pi/16,-np.pi/64,np.pi/64,np.pi/16,np.pi/4,np.pi/2,np.pi]
-# X = list(it.product(t,e_x,e_y, th))
+X, e_x, e_y, th, state_table = generate_state_space()
+U = generate_control_space()
 n_states = len(X)
-print(f'State space : {n_states}')
-state_table = {}
-for i in range(n_states):
-    state_table.update({X[i]:i})
-v = np.linspace(0,1,5)
-w = np.linspace(-1,1,10)
-U = list(it.product(v,w))
 n_controlspace = len(U)
+
 time_step = 0.5
 def lissajous(k):
     xref_start = 0
@@ -77,8 +63,8 @@ def step_cost(e, u, t, ref = cur_ref):
     : given the current error and the control
     : compute the step cost defined as the sum of tracking errors and control effort
     '''
-    Q = 15*np.eye(2)  #Prev : Q = 10, q = 10, Q= 15, q = 15
-    q = 15
+    Q = 15*np.eye(2)  #Prev :Q= 15, q = 5
+    q = 5
     R = np.eye(2)
     p = e[:2]
     th = e[-1]
@@ -106,46 +92,14 @@ loop.run_until_complete(main())
 
 def value_iteration_matrix(V,L,p):
     for i in tqdm(range(500000)):
-        # print(f'shape L : {L.shape}')
-        # print(f'p shape : {p.shape}')
-        # print(f'shape : {(p @ V)[:,:,-1].shape}')
-        # print(np.where((p @ V)[:,:,-1] != 0))
         Q = L + 0.95 * (p @ V[i][:,None])[:,:,-1]
         V[i + 1, :] = np.min(Q, axis = 1)
-#         print(f'shape V_new : {V_new.shape}')
         pi = np.argmin(Q, axis = 1)
         diff = np.linalg.norm(V[i+1] - V[i])
         print(f'diff : {diff}')
         if diff < 1e-3 : 
             return pi
     return pi
-
-# def policy_iteration(V,pi,L,p):
-#     for i in tqdm(range(500)):
-        
-#         #Policy evaluation
-#         v = V[i]
-#         pi_i = pi[i]
-#         l = L[:,pi_i]
-#         print(f'pi_i : {pi_i.shape}')
-#         print(f'l shape : {l.shape}')
-#         # for k in tqdm(range(1000)):
-#         #     l = L[:,pi_i]
-#         #     prob = p[:,pi[i]]
-#         #     v_new = l + 0.97 * (prob @ v)
-#         #     if np.linalg.norm(v - v_new) < 1e-3:
-#         #         v = v_new
-#         #         break
-#         #     v = v_new
-         
-         
-#         # #Policy improvement 
-#         # Q = L + 0.97 * (p @ v)
-#         # V[i+1, :] = np.min(Q, axis = 1)
-#         # pi[i+1, :] = np.argmin(Q,axis = 1)
-
-#         if all(V[i+1] == V[i]):
-#             return pi[i+1]
 
 n_states = P.shape[0]
 num_iters = 5000
@@ -155,5 +109,5 @@ pi_opt = value_iteration_matrix(V,L,p= P)
 print(f'optimal policy : {pi_opt}')
 
 with open('pi.pkl', 'wb') as f:
-    x = [pi_opt]
+    x = [pi_opt, X, e_x, e_y, th, state_table, U]
     pickle.dump(x,f)
