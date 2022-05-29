@@ -39,7 +39,6 @@ v = np.linspace(0,1,5)
 w = np.linspace(-1,1,10)
 U = list(it.product(v,w))
 n_controlspace = len(U)
-# pdf = multivariate_normal(mean=[0,0,0], cov=np.diag([0.04, 0.04, 0.004]))
 
 time_step = 0.5
 def lissajous(k):
@@ -72,38 +71,27 @@ def error_dynamics(e, u,t, ref = cur_ref):
     '''
     G = np.array([[0.5 * np.cos(e[2] + ref[t][2]), 0], [0.5 * np.sin(e[2] + ref[t][2]), 0], [0, 0.5]])
     ref_diff = np.array([[ref[t][0] - ref[t+1][0]], [ref[t][1] - ref[t+1][1]], [(ref[t][2] -  ref[t+1][2])]])
-#     print(f'e shape : {e.shape}')
     next_error = e[:,None] + G @ np.array([[u[0]], [u[1]]]) + ref_diff
     next_error[2] = (next_error[2] + np.pi)%(2*np.pi) - np.pi
-#     print(f'next error : {next_error}')
     next_x, next_y, next_th = next_error[0][0], next_error[1][0], next_error[2][0]
-    # print(f'next errors : {next_x, next_y, next_th}')
-    # print(f'{np.abs(next_x - e_x)}')
-    # print(f'{np.abs(next_y - e_y)}')
-    # print(f'{np.abs(next_th - th)}')
-    ind_x = list(np.abs(next_x - e_x).argsort()[:5])
-    ind_y = list(np.abs(next_y - e_y).argsort()[:5])
-    ind_th = list(np.abs(next_th - th).argsort()[:5]) 
-    # print(f'index x  : {ind_x}')
+    k = 3
+    ind_x = list(np.abs(next_x - e_x).argsort()[:k])
+    ind_y = list(np.abs(next_y - e_y).argsort()[:k])
+    ind_th = list(np.abs(next_th - th).argsort()[:k]) 
     next_states, pr = [],[]
     mean = [next_x, next_y, next_th]
-    # print(f'mean : {mean}')
-    # print(e_x[ind_x[0]])
     pdf = multivariate_normal(mean = mean, cov=np.diag([0.04, 0.04, 0.004]))
-    for i in range(5):
+    for i in range(k):
         next_states.append(state_table[(0.5*(t + 1)%50, e_x[ind_x[i]], e_y[ind_y[i]], th[ind_th[i]])])
-        # print(f'state probability : {pdf.pdf(e_x[ind_x[i]] - next_x, e_y[ind_y[i]] - next_y, th[ind_th[i]] - next_th)}')
-        # print(f'errors : {[list(e_x[ind_x[i]] - next_x)[0], list(e_y[ind_y[i]] - next_y)[0], list(th[ind_th[i]] - next_th)[0]]}')
         pr.append(pdf.pdf([(e_x[ind_x[i]]), (e_y[ind_y[i]]), (th[ind_th[i]])]))
     pr = np.array(pr)
     pr /= (np.sum(pr))
-    # print(f'prob : {pr}')
     return next_states, pr
 
 def check_collision(x,y):
     x_c1,y_c1 = -2,-2
     x_c2, y_c2 = 1,2
-    k = 50
+    k = 500
     if (x-x_c1)**2 + (y-y_c1)**2 < 0.55**2:
         penalty = k 
     elif (x-x_c2)**2 + (y-y_c2)**2 < 0.55**2:
@@ -117,8 +105,8 @@ def step_cost(e, u, t, ref = cur_ref):
     : given the current error and the control
     : compute the step cost defined as the sum of tracking errors and control effort
     '''
-    Q = 40* np.eye(2)
-    q = 30
+    Q = 15* np.eye(2)
+    q = 8
     R = 2 * np.eye(2)
     p = e[:2]
     th = e[-1]

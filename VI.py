@@ -38,7 +38,6 @@ v = np.linspace(0,1,5)
 w = np.linspace(-1,1,10)
 U = list(it.product(v,w))
 n_controlspace = len(U)
-
 time_step = 0.5
 def lissajous(k):
     xref_start = 0
@@ -64,7 +63,7 @@ for i in range(200):
 def check_collision(x,y):
     x_c1,y_c1 = -2,-2
     x_c2, y_c2 = 1,2
-    k = 500
+    k = 25
     if (x-x_c1)**2 + (y-y_c1)**2 < 0.55**2:
         penalty = k 
     elif (x-x_c2)**2 + (y-y_c2)**2 < 0.55**2:
@@ -78,9 +77,9 @@ def step_cost(e, u, t, ref = cur_ref):
     : given the current error and the control
     : compute the step cost defined as the sum of tracking errors and control effort
     '''
-    Q = 50*np.eye(2)
-    q = 40
-    R = 3 * np.eye(2)
+    Q = 15*np.eye(2)  #Prev : Q = 10, q = 10, Q= 15, q = 15
+    q = 15
+    R = np.eye(2)
     p = e[:2]
     th = e[-1]
     u = np.array([[u[0]],[u[1]]])
@@ -105,28 +104,54 @@ async def main():
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
 
-def value_iteration_matrix(V,pi,L,p):
-    for i in tqdm(range(5000)):
+def value_iteration_matrix(V,L,p):
+    for i in tqdm(range(500000)):
         # print(f'shape L : {L.shape}')
         # print(f'p shape : {p.shape}')
         # print(f'shape : {(p @ V)[:,:,-1].shape}')
         # print(np.where((p @ V)[:,:,-1] != 0))
-        Q = L + 0.97 * (p @ V[i][:,None])[:,:,-1]
+        Q = L + 0.95 * (p @ V[i][:,None])[:,:,-1]
         V[i + 1, :] = np.min(Q, axis = 1)
 #         print(f'shape V_new : {V_new.shape}')
         pi = np.argmin(Q, axis = 1)
         diff = np.linalg.norm(V[i+1] - V[i])
         print(f'diff : {diff}')
-        if diff < 1e-1 : 
+        if diff < 1e-3 : 
             return pi
     return pi
+
+# def policy_iteration(V,pi,L,p):
+#     for i in tqdm(range(500)):
+        
+#         #Policy evaluation
+#         v = V[i]
+#         pi_i = pi[i]
+#         l = L[:,pi_i]
+#         print(f'pi_i : {pi_i.shape}')
+#         print(f'l shape : {l.shape}')
+#         # for k in tqdm(range(1000)):
+#         #     l = L[:,pi_i]
+#         #     prob = p[:,pi[i]]
+#         #     v_new = l + 0.97 * (prob @ v)
+#         #     if np.linalg.norm(v - v_new) < 1e-3:
+#         #         v = v_new
+#         #         break
+#         #     v = v_new
+         
+         
+#         # #Policy improvement 
+#         # Q = L + 0.97 * (p @ v)
+#         # V[i+1, :] = np.min(Q, axis = 1)
+#         # pi[i+1, :] = np.argmin(Q,axis = 1)
+
+#         if all(V[i+1] == V[i]):
+#             return pi[i+1]
 
 n_states = P.shape[0]
 num_iters = 5000
 n_controlspace = P.shape[1]
 V = np.zeros((num_iters + 1, n_states))
-pi = np.zeros((n_states,2))
-pi_opt = value_iteration_matrix(V,pi,L,p= P)
+pi_opt = value_iteration_matrix(V,L,p= P)
 print(f'optimal policy : {pi_opt}')
 
 with open('pi.pkl', 'wb') as f:
