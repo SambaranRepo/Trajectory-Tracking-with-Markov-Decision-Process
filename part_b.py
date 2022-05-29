@@ -21,24 +21,21 @@ def threadpool(f):
 
 t = np.arange(0,51,0.5)
 t = t[:-1]
-# e_x = [-3,-2] + list(np.linspace(-1,1,10)) + [2,3]
-# e_y = e_x
-# th = list(np.linspace(-np.pi,-np.pi/30, 3)) + list(np.linspace(-np.pi/60, np.pi/60, 6)) + list(np.linspace(np.pi/30, np.pi,3))
-# e_x= np.linspace(-3,3,8)
-# e_y = e_x
-# # print(f'e_x : {e_x}')
-# th = np.linspace(-np.pi, np.pi, 10)
-# X = list(it.product(t,e_x,e_y, th))
-e_x = [-3,-1,-0.5,-0.2,0.2, 0.5,1,3]
+e_x= [-3, -0.5] + list(np.linspace(-0.25, 0.25, 5)) + [0.5,3]
 e_y = e_x
-th = [-np.pi, -np.pi/2, -np.pi/4, -np.pi/16,-np.pi/64,np.pi/64,np.pi/16,np.pi/4,np.pi/2,np.pi]
+# print(f'e_x : {e_x}')
+th = [-np.pi, -np.pi/2] + list(np.linspace(-np.pi/4, np.pi/4, 5)) + [np.pi/2, np.pi] 
 X = list(it.product(t,e_x,e_y, th))
+# e_x = [-3,-1,-0.5,-0.2,0.2, 0.5,1,3]
+# e_y = e_x
+# th = [-np.pi, -np.pi/2, -np.pi/4, -np.pi/16,-np.pi/64,np.pi/64,np.pi/16,np.pi/4,np.pi/2,np.pi]
+# X = list(it.product(t,e_x,e_y, th))
 n_states = len(X)
 print(f'State space : {n_states}')
 state_table = {}
 for i in range(n_states):
     state_table.update({X[i]:i})
-v = np.linspace(0,1,10)
+v = np.linspace(0,1,5)
 w = np.linspace(-1,1,10)
 U = list(it.product(v,w))
 n_controlspace = len(U)
@@ -74,27 +71,27 @@ def error_dynamics(e, u,t, ref = cur_ref):
     : Consider noise in the motion model. 
     '''
     G = np.array([[0.5 * np.cos(e[2] + ref[t][2]), 0], [0.5 * np.sin(e[2] + ref[t][2]), 0], [0, 0.5]])
-    ref_diff = np.array([[ref[t][0] - ref[t+1][0]], [ref[t][1] - ref[t+1][1]], [(ref[t][2] -  ref[t+1][2] + np.pi) % (2*np.pi) - np.pi]])
+    ref_diff = np.array([[ref[t][0] - ref[t+1][0]], [ref[t][1] - ref[t+1][1]], [(ref[t][2] -  ref[t+1][2])]])
 #     print(f'e shape : {e.shape}')
     next_error = e[:,None] + G @ np.array([[u[0]], [u[1]]]) + ref_diff
-    # next_error[2] = (next_error[2] + np.pi)%(2*np.pi) - np.pi
+    next_error[2] = (next_error[2] + np.pi)%(2*np.pi) - np.pi
 #     print(f'next error : {next_error}')
     next_x, next_y, next_th = next_error[0][0], next_error[1][0], next_error[2][0]
     # print(f'next errors : {next_x, next_y, next_th}')
     # print(f'{np.abs(next_x - e_x)}')
     # print(f'{np.abs(next_y - e_y)}')
     # print(f'{np.abs(next_th - th)}')
-    ind_x = list(np.abs(next_x - e_x).argsort()[:3])
-    ind_y = list(np.abs(next_y - e_y).argsort()[:3])
-    ind_th = list(np.abs(next_th - th).argsort()[:3]) 
+    ind_x = list(np.abs(next_x - e_x).argsort()[:5])
+    ind_y = list(np.abs(next_y - e_y).argsort()[:5])
+    ind_th = list(np.abs(next_th - th).argsort()[:5]) 
     # print(f'index x  : {ind_x}')
     next_states, pr = [],[]
     mean = [next_x, next_y, next_th]
     # print(f'mean : {mean}')
     # print(e_x[ind_x[0]])
     pdf = multivariate_normal(mean = mean, cov=np.diag([0.04, 0.04, 0.004]))
-    for i in range(3):
-        next_states.append(state_table[((t + 1)%50, e_x[ind_x[i]], e_y[ind_y[i]], th[ind_th[i]])])
+    for i in range(5):
+        next_states.append(state_table[(0.5*(t + 1)%50, e_x[ind_x[i]], e_y[ind_y[i]], th[ind_th[i]])])
         # print(f'state probability : {pdf.pdf(e_x[ind_x[i]] - next_x, e_y[ind_y[i]] - next_y, th[ind_th[i]] - next_th)}')
         # print(f'errors : {[list(e_x[ind_x[i]] - next_x)[0], list(e_y[ind_y[i]] - next_y)[0], list(th[ind_th[i]] - next_th)[0]]}')
         pr.append(pdf.pdf([(e_x[ind_x[i]]), (e_y[ind_y[i]]), (th[ind_th[i]])]))
@@ -108,9 +105,9 @@ def check_collision(x,y):
     x_c2, y_c2 = 1,2
     k = 50
     if (x-x_c1)**2 + (y-y_c1)**2 < 0.55**2:
-        penalty = -k * ((x-x_c1)**2 + (y-y_c1)**2 - 0.55**2)
+        penalty = k 
     elif (x-x_c2)**2 + (y-y_c2)**2 < 0.55**2:
-        penalty = -k * ((x-x_c2)**2 + (y-y_c2)**2 - 0.55**2)
+        penalty = k 
     else: 
         penalty = 0
     return penalty
@@ -120,8 +117,8 @@ def step_cost(e, u, t, ref = cur_ref):
     : given the current error and the control
     : compute the step cost defined as the sum of tracking errors and control effort
     '''
-    Q = 4* np.eye(2)
-    q = 3
+    Q = 40* np.eye(2)
+    q = 30
     R = 2 * np.eye(2)
     p = e[:2]
     th = e[-1]
@@ -136,7 +133,6 @@ def step_cost(e, u, t, ref = cur_ref):
 #         return asyncio.get_event_loop().run_in_executor(executor, f, *args, **kwargs)
 #     return wrapped
 
-P = [0] * n_states
 coords1,coords2, coords3 = [], [], []
 data = []
 

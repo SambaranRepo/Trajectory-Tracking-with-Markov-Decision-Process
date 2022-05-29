@@ -1,4 +1,5 @@
 from time import time
+from time import sleep
 import numpy as np
 from utils import visualize
 from controller import *
@@ -68,7 +69,7 @@ if __name__ == '__main__':
     # Params
     traj = lissajous
     ref_traj = []
-    error = 0.0
+    error_total = 0.0
     car_states = []
     times = []
     # Start main loop
@@ -78,21 +79,21 @@ if __name__ == '__main__':
     cur_iter = 0
     t = np.arange(0,51,0.5)
     t = t[:-1]
-    e_x= np.linspace(-3,3,8)
+    e_x= [-3, -0.5] + list(np.linspace(-0.25, 0.25, 5)) + [0.5,3]
     e_y = e_x
     # print(f'e_x : {e_x}')
-    th = np.linspace(-np.pi, np.pi, 10)
+    th = [-np.pi, -np.pi/2] + list(np.linspace(-np.pi/4, np.pi/4, 5)) + [np.pi/2, np.pi] 
     X = list(it.product(t,e_x,e_y, th))
-    # e_x = [-3,-1,-0.5,-0.25,-0.125,-0.05,0.05, 0.125,0.25, 0.5,1,3]
+    # e_x = [-3,-1,-0.5,-0.2,0.2, 0.5,1,3]
     # e_y = e_x
-    # th = [-np.pi, -np.pi/3, -np.pi/12, -np.pi/48,-np.pi/96,np.pi/96,np.pi/48,np.pi/12,np.pi/3,np.pi]
+    # th = [-np.pi, -np.pi/2, -np.pi/4, -np.pi/16,-np.pi/64,np.pi/64,np.pi/16,np.pi/4,np.pi/2,np.pi]
     # X = list(it.product(t,e_x,e_y, th))
     n_states = len(X)
     print(f'State space : {n_states}')
     state_table = {}
     for i in range(n_states):
         state_table.update({X[i]:i})
-    v = np.linspace(0,1,4)
+    v = np.linspace(0,1,5)
     w = np.linspace(-1,1,10)
     U = list(it.product(v,w))
     n_controlspace = len(U)
@@ -112,14 +113,17 @@ if __name__ == '__main__':
         # Save current state and reference state for visualization
         ref_traj.append(cur_ref[0])
         car_states.append(cur_state)
-        error = cur_state - cur_ref[0]
+        error = 1*(cur_state - cur_ref[0])
         error[2] = (error[2] + np.pi) % (2 * np.pi) - np.pi
+        # print(f'actual error : {error}')
         error_x = e_x[np.argmin(np.abs(error[0] - e_x))]
         error_y = e_y[np.argmin(np.abs(error[1] - e_y))]
         error_th = th[np.argmin(np.abs(error[2] - th))]
         index = state_table[((cur_iter*time_step) %50, error_x, error_y, error_th)]
         print(index)
-        print(pi[index])
+        # print(pi[index])
+        # print(f'close grid error : {[error_x, error_y, error_th]}')
+        # sleep(10)
         ################################################################
         # Generate control input
         # TODO: Replace this simple controller with your own controller
@@ -142,14 +146,14 @@ if __name__ == '__main__':
         print(cur_iter)
         print(t2-t1)
         times.append(t2-t1)
-        error = error + np.linalg.norm(cur_state - cur_ref[1])
+        error_total= error_total + np.linalg.norm(cur_state - cur_ref[1])
         cur_iter = cur_iter + 1
 
     main_loop_time = time()
     print('\n\n')
     print('Total time: ', main_loop_time - main_loop)
     print('Average iteration time: ', np.array(times).mean() * 1000, 'ms')
-    print('Final error: ', error)
+    print('Final error: ', error_total)
 
     # Visualization
     ref_traj = np.array(ref_traj)
