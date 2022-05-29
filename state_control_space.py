@@ -24,7 +24,7 @@ def generate_control_space():
     : function to generate the control space for the tracking problem 
     : control includes the linear velocity and the angular velocity of the robot
     '''
-    v = np.linspace(0,1,5)
+    v = np.linspace(0,1,10)
     w = np.linspace(-1,1,10)
     U = list(it.product(v,w))
     return U

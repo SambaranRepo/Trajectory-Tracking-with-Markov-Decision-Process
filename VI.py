@@ -7,9 +7,8 @@ import asyncio
 import itertools as it
 from state_control_space import *
 
-with open('partial_working_MDP.pkl', 'rb') as f:
+with open('MDP.pkl', 'rb') as f:
     x = pickle.load(f)
-    L = x[1]
     P = x[0]
 
 executor = ThreadPoolExecutor(16)
@@ -63,9 +62,9 @@ def step_cost(e, u, t, ref = cur_ref):
     : given the current error and the control
     : compute the step cost defined as the sum of tracking errors and control effort
     '''
-    Q = 15*np.eye(2)  #Prev :Q= 15, q = 5
-    q = 5
-    R = np.eye(2)
+    Q = 50*np.eye(2)  #Prev :Q= 15, q = 5 for u : 5 X 10; Q = 50, q = 15 for u = 10 X 10
+    q = 15
+    R = 1*np.eye(2)
     p = e[:2]
     th = e[-1]
     u = np.array([[u[0]],[u[1]]])
@@ -73,6 +72,7 @@ def step_cost(e, u, t, ref = cur_ref):
     penalty = check_collision(p[0] + ref[t][0], p[1] + ref[t][1])
     return p.T @ Q @ p + q*(1 - np.cos(th))**2 + u.T @ R @ u + penalty
 
+L = np.zeros((n_states, n_controlspace))
 
 @threadpool
 def create_L(i):
@@ -90,14 +90,15 @@ async def main():
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
 
-def value_iteration_matrix(V,L,p):
+def value_iteration_matrix(V,L,p, thresh = 1e-3):
     for i in tqdm(range(500000)):
         Q = L + 0.95 * (p @ V[i][:,None])[:,:,-1]
         V[i + 1, :] = np.min(Q, axis = 1)
         pi = np.argmin(Q, axis = 1)
-        diff = np.linalg.norm(V[i+1] - V[i])
-        print(f'diff : {diff}')
-        if diff < 1e-3 : 
+        diff = np.linalg.norm(V[i+1] - V[i], np.inf)
+        if i%50 == 0:
+            print(f'diff : {diff}')
+        if diff < thresh : 
             return pi
     return pi
 
@@ -105,9 +106,11 @@ n_states = P.shape[0]
 num_iters = 5000
 n_controlspace = P.shape[1]
 V = np.zeros((num_iters + 1, n_states))
-pi_opt = value_iteration_matrix(V,L,p= P)
-print(f'optimal policy : {pi_opt}')
+# pi_opt1 = value_iteration_matrix(V,L,p= P)
+pi_opt2 = value_iteration_matrix(V,L,P,1e-6)
+# rand = np.where(pi_opt1 != pi_opt2)
+# print(f'optimal policy : {pi_opt}')
 
 with open('pi.pkl', 'wb') as f:
-    x = [pi_opt, X, e_x, e_y, th, state_table, U]
+    x = [pi_opt2, X, e_x, e_y, th, state_table, U]
     pickle.dump(x,f)

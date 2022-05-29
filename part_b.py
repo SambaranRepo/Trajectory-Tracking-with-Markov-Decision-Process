@@ -11,33 +11,18 @@ from sparse import COO
 import pickle
 from functools import wraps
 from concurrent.futures import ThreadPoolExecutor, thread
+from state_control_space import *
 
-executor = ThreadPoolExecutor(16)
+executor = ThreadPoolExecutor()
 def threadpool(f):
     @wraps(f)
     def wrap(*args, **kwargs):
         return asyncio.wrap_future(executor.submit(f,*args, **kwargs))
     return wrap
 
-t = np.arange(0,51,0.5)
-t = t[:-1]
-e_x= [-3, -0.5] + list(np.linspace(-0.25, 0.25, 5)) + [0.5,3]
-e_y = e_x
-# print(f'e_x : {e_x}')
-th = [-np.pi, -np.pi/2] + list(np.linspace(-np.pi/4, np.pi/4, 5)) + [np.pi/2, np.pi] 
-X = list(it.product(t,e_x,e_y, th))
-# e_x = [-3,-1,-0.5,-0.2,0.2, 0.5,1,3]
-# e_y = e_x
-# th = [-np.pi, -np.pi/2, -np.pi/4, -np.pi/16,-np.pi/64,np.pi/64,np.pi/16,np.pi/4,np.pi/2,np.pi]
-# X = list(it.product(t,e_x,e_y, th))
+X,e_x,e_y,th,state_table = generate_state_space()
+U = generate_control_space()
 n_states = len(X)
-print(f'State space : {n_states}')
-state_table = {}
-for i in range(n_states):
-    state_table.update({X[i]:i})
-v = np.linspace(0,1,5)
-w = np.linspace(-1,1,10)
-U = list(it.product(v,w))
 n_controlspace = len(U)
 
 time_step = 0.5
@@ -74,7 +59,7 @@ def error_dynamics(e, u,t, ref = cur_ref):
     next_error = e[:,None] + G @ np.array([[u[0]], [u[1]]]) + ref_diff
     next_error[2] = (next_error[2] + np.pi)%(2*np.pi) - np.pi
     next_x, next_y, next_th = next_error[0][0], next_error[1][0], next_error[2][0]
-    k = 3
+    k = 4
     ind_x = list(np.abs(next_x - e_x).argsort()[:k])
     ind_y = list(np.abs(next_y - e_y).argsort()[:k])
     ind_th = list(np.abs(next_th - th).argsort()[:k]) 
@@ -88,38 +73,6 @@ def error_dynamics(e, u,t, ref = cur_ref):
     pr /= (np.sum(pr))
     return next_states, pr
 
-def check_collision(x,y):
-    x_c1,y_c1 = -2,-2
-    x_c2, y_c2 = 1,2
-    k = 500
-    if (x-x_c1)**2 + (y-y_c1)**2 < 0.55**2:
-        penalty = k 
-    elif (x-x_c2)**2 + (y-y_c2)**2 < 0.55**2:
-        penalty = k 
-    else: 
-        penalty = 0
-    return penalty
-
-def step_cost(e, u, t, ref = cur_ref):
-    '''
-    : given the current error and the control
-    : compute the step cost defined as the sum of tracking errors and control effort
-    '''
-    Q = 15* np.eye(2)
-    q = 8
-    R = 2 * np.eye(2)
-    p = e[:2]
-    th = e[-1]
-    u = np.array([[u[0]],[u[1]]])
-
-    penalty = check_collision(p[0] + ref[t][0], p[1] + ref[t][1])
-    return p.T @ Q @ p + q*(1 - np.cos(th))**2 + u.T @ R @ u + penalty
-
-
-# def threadpool(f):
-#     def wrapped(*args, **kwargs):
-#         return asyncio.get_event_loop().run_in_executor(executor, f, *args, **kwargs)
-#     return wrapped
 
 coords1,coords2, coords3 = [], [], []
 data = []
@@ -131,35 +84,23 @@ def create_P(i):
     t = int(X[i][0]//0.5)
     for j in range(n_controlspace):
         next_states, pr = error_dynamics(e,U[j],t)
-#         print(f'probs : {pr}')
         for k in range(len(next_states)):
             coords1.append(i)
             coords2.append(j)
             coords3.append(next_states[k])
             data.append(pr[k])    
 
-L = np.zeros((n_states, n_controlspace))
 
-@threadpool
-def create_L(i):
-    e = X[i][1:]
-    t = int(X[i][0]//0.5)
-    l = np.zeros(n_controlspace)
-    for j in range(n_controlspace):
-        l[j] = step_cost(np.array(e), U[j],t)
-    L[i] = l
 
 
 async def main():
     await asyncio.gather(*[create_P(i) for i in tqdm(range(n_states))])
-    await asyncio.gather(*[create_L(i) for i in tqdm(range(n_states))])
-
     # await asyncio.gather(*[create_P(i) for i in tqdm(range(10))])
     # await asyncio.gather(*[create_L(i) for i in tqdm(range(10))])
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
-print(f'shape of L : {L.shape}')
+# print(f'shape of L : {L.shape}')
 print(f'coords1 shape : {len(coords1)}')
 print(f'coords2 shape : {len(coords2)}')
 print(f'coords1 shape : {len(coords3)}')
@@ -173,5 +114,5 @@ print(f' shape of p : {p.shape}')
 #     p = pickle.load(f)[0]
 
 with open('MDP.pkl', 'wb') as f:
-    save = [p,L]
+    save = [p]
     pickle.dump(save, f)
