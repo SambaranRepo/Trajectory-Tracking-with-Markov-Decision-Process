@@ -49,7 +49,7 @@ for i in range(200):
 def check_collision(x,y):
     x_c1,y_c1 = -2,-2
     x_c2, y_c2 = 1,2
-    k = 25
+    k = 25 #prev value : 25
     if (x-x_c1)**2 + (y-y_c1)**2 < 0.55**2:
         penalty = k 
     elif (x-x_c2)**2 + (y-y_c2)**2 < 0.55**2:
