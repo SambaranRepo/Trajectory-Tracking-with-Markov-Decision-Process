@@ -49,9 +49,9 @@ def check_collision(x,y):
     x_c1,y_c1 = -2,-2
     x_c2, y_c2 = 1,2
     k = 25 #prev value : 25
-    if (x-x_c1)**2 + (y-y_c1)**2 < 0.55**2:
+    if (x-x_c1)**2 + (y-y_c1)**2 < 0.5**2:
         penalty = k 
-    elif (x-x_c2)**2 + (y-y_c2)**2 < 0.55**2:
+    elif (x-x_c2)**2 + (y-y_c2)**2 < 0.5**2:
         penalty = k 
     else: 
         penalty = 0
@@ -63,7 +63,7 @@ def step_cost(e, u, t, ref = cur_ref):
     : compute the step cost defined as the sum of tracking errors and control effort
     '''
     Q = 50*np.eye(2)  #Prev :Q= 15, q = 5 for u : 5 X 10; Q = 50, q = 15 for u = 10 X 10
-    q = 15
+    q = 30
     R = 1*np.eye(2)
     p = e[:2]
     th = e[-1]

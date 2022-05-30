@@ -1,3 +1,5 @@
 __pycache__
 .ipynb_checkpoints
-*MDP.pkl
+MDP.pkl
+partial_working_MDP.pkl
+*MDP_u_*.pkl

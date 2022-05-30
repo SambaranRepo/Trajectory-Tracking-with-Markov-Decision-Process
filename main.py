@@ -85,9 +85,14 @@ if __name__ == '__main__':
     # with open('pi.pkl', 'rb') as f:
     #     pi = pickle.load(f)[0]
 
-    with open('pi.pkl', 'rb') as f:
+    # with open('working_VI_pi_u_5x10.pkl', 'rb') as f:
+    n_v,n_w = 10,10
+    filename = f'working_VI_MDP_u_{n_v}x{n_w}.pkl'
+    # filename = 'pi.pkl'
+    with open(filename, 'rb') as f:
         results = pickle.load(f)
         pi,X,e_x,e_y,th,state_table,U = results[0], results[1], results[2], results[3], results[4], results[5], results[6]
+    print(len(U))
 
     print(pi)
     while (cur_iter * time_step < sim_time):
@@ -106,8 +111,9 @@ if __name__ == '__main__':
         # print(f'actual error : {error}')
         error_x = e_x[np.argmin(np.abs(error[0] - e_x))]
         error_y = e_y[np.argmin(np.abs(error[1] - e_y))]
-        error_th = th[np.argmin(np.abs(error[2] - th))]
+        error_th = th[np.argmin(np.abs(error[2] - th ))]
         index = state_table[((cur_iter*time_step) %50, error_x, error_y, error_th)]
+
         print(index)
         # print(pi[index])
         # print(f'close grid error : {[error_x, error_y, error_th]}')
