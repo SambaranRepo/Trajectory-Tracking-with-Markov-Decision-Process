@@ -79,16 +79,12 @@ if __name__ == '__main__':
     # Initialize state
     cur_state = np.array([x_init, y_init, theta_init])
     cur_iter = 0
-    # X,e_x,e_y,th,state_table = generate_state_space()
-    # U = generate_control_space()
-    # # Main loop
-    # with open('pi.pkl', 'rb') as f:
-    #     pi = pickle.load(f)[0]
-
-    # with open('working_VI_pi_u_5x10.pkl', 'rb') as f:
     n_v,n_w = 10,10
-    filename = f'working_VI_MDP_u_{n_v}x{n_w}.pkl'
-    # filename = 'pi.pkl'
+    Q,q,R = 75,30,1
+    # filename = f'working_VI_pi_u_{n_v}x{n_w}.pkl'
+    filename = f'pi_{Q}_{q}_{R}_obs=0.55.pkl'
+    # filename = f'pi_{Q}_{q}_{R}.pkl'
+    # filename = 'pi_PI.pkl'
     with open(filename, 'rb') as f:
         results = pickle.load(f)
         pi,X,e_x,e_y,th,state_table,U = results[0], results[1], results[2], results[3], results[4], results[5], results[6]
@@ -140,7 +136,8 @@ if __name__ == '__main__':
         print(cur_iter)
         print(t2-t1)
         times.append(t2-t1)
-        error_total= error_total + np.linalg.norm(cur_state - cur_ref[1])
+        error_total= error_total + np.linalg.norm([cur_state[0] - cur_ref[1][0], cur_state[1] - cur_ref[1][1], 
+        (cur_state[2] - cur_ref[1][2] + np.pi) % (2*np.pi) - np.pi])
         cur_iter = cur_iter + 1
 
     main_loop_time = time()
