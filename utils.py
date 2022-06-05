@@ -5,7 +5,7 @@ from matplotlib import animation
 from time import time
 
 
-def visualize(car_states, ref_traj, obstacles, t, time_step, save=False):
+def visualize(car_states, ref_traj, obstacles, t, time_step, algo, Q, q, R, save=False):
     init_state = car_states[0,:]
     def create_triangle(state=[0,0,0], h=0.5, w=0.25, update=False):
         x, y, th = state
@@ -102,7 +102,7 @@ def visualize(car_states, ref_traj, obstacles, t, time_step, save=False):
     plt.show()
 
     if save == True:
-        sim.save('./fig/animation' + str(time()) +'.gif', writer='ffmpeg', fps=15)
+        sim.save(f'./fig/animation_{algo}_Q{Q}_q{q}_R{R}_obs_0.55.gif', writer='ffmpeg', fps=15)
 
     return
 

@@ -7,7 +7,17 @@ from concurrent.futures import ThreadPoolExecutor, thread
 import asyncio
 import itertools as it
 from state_control_space import *
-
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('Q', help = 'Enter parameter Q', type=int)
+parser.add_argument('q', help = 'Enter parameter q', type=int)
+parser.add_argument('R', help = 'Enter parameter R', type=int)
+args = parser.parse_args()
+Q = args.Q
+q = args.q
+R = args.R
+assert isinstance(Q,int) and isinstance(q,int) and isinstance(R,int)
+assert Q >0 and q > 0 and R > 0
 with open('MDP.pkl', 'rb') as f:
     x = pickle.load(f)
     P = x[0]
@@ -67,15 +77,15 @@ def step_cost(e, u, t, ref = cur_ref):
     : given the current error and the control
     : compute the step cost defined as the sum of tracking errors and control effort
     '''
-    Q = 75*np.eye(2)  #Prev :Q= 15, q = 5 for u : 5 X 10; Q = 50, q = 15 for u = 10 X 10
-    q = 30
-    R = 1*np.eye(2)
+    Q_p = Q*np.eye(2)  #Prev :Q= 15, q = 5 for u : 5 X 10; Q = 50, q = 15 for u = 10 X 10
+    q_p = q
+    R_p = R*np.eye(2)
     p = e[:2]
     th = e[-1]
     u = np.array([[u[0]],[u[1]]])
 
     penalty = check_collision(p[0] + ref[t][0], p[1] + ref[t][1])
-    return p.T @ Q @ p + q*(1 - np.cos(th))**2 + u.T @ R @ u + penalty
+    return p.T @ Q_p @ p + q_p*(1 - np.cos(th))**2 + u.T @ R_p @ u + penalty
 
 L = np.zeros((n_states, n_controlspace))
 
@@ -101,7 +111,7 @@ if generate :
     loop.run_until_complete(main())
 
 else:
-    with open('step_cost.pkl', 'rb') as f:
+    with open('./step_cost/step_cost.pkl', 'rb') as f:
         L = pickle.load(f)[0]
 
 def value_iteration_matrix(V,L,p, thresh = 1e-3):
@@ -153,9 +163,9 @@ V = np.zeros((num_iters + 1, n_states))
 # loop = asyncio.get_event_loop()
 # loop.run_until_complete(main())
 
-Q = 75  #Prev :Q= 15, q = 5 for u : 5 X 10; Q = 50, q = 15 for u = 10 X 10
-q = 30
-R = 1
+# Q = 100  #Prev :Q= 15, q = 5 for u : 5 X 10; Q = 50, q = 15 for u = 10 X 10
+# q = 10
+# R = 1
 
 pi = np.zeros((num_iters + 1, n_states)).astype(np.uint8)
 # pi_opt1 = value_iteration_matrix(V,L,p= P)
@@ -164,10 +174,10 @@ pi_opt2 = value_iteration_matrix(V,L,P,1e-9)
 # rand = np.where(pi_opt1 != pi_opt2)
 print(f'optimal policy : {pi_opt2}')
 
-with open(f'pi_{Q}_{q}_{R}_obs=0.55.pkl', 'wb') as f:
+with open(f'./policy/pi_{Q}_{q}_{R}_obs=0.55.pkl', 'wb') as f:
     x = [pi_opt2, X, e_x, e_y, th, state_table, U]
     pickle.dump(x,f)
 
-with open(f'step_cost_{Q}_{q}_{R}.pkl', 'wb') as f:
+with open(f'./step_cost/step_cost_{Q}_{q}_{R}.pkl', 'wb') as f:
     x = [L]
     pickle.dump(x,f)

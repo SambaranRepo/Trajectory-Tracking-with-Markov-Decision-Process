@@ -4,3 +4,5 @@ MDP.pkl
 partial_working_MDP.pkl
 *MDP_u_*.pkl
 *.pkl
+policy/
+step_cost/

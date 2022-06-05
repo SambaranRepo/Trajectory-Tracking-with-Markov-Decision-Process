@@ -7,6 +7,7 @@ from controller import *
 import itertools as it
 import pickle
 from state_control_space import *
+import matplotlib.pyplot as plt
 # Simulation params
 np.random.seed(10)
 time_step = 0.5 # time between steps in seconds
@@ -80,10 +81,9 @@ if __name__ == '__main__':
     cur_state = np.array([x_init, y_init, theta_init])
     cur_iter = 0
     n_v,n_w = 10,10
-    Q,q,R = 75,30,1
-    # filename = f'working_VI_pi_u_{n_v}x{n_w}.pkl'
-    filename = f'pi_{Q}_{q}_{R}_obs=0.55.pkl'
-    # filename = f'pi_{Q}_{q}_{R}.pkl'
+    Q,q,R = 30,25,1
+    # filename = f'pi_{Q}_{q}_{R}_obs=0.55.pkl'
+    filename = f'./policy/pi_{Q}_{q}_{R}_obs=0.55.pkl'
     # filename = 'pi_PI.pkl'
     with open(filename, 'rb') as f:
         results = pickle.load(f)
@@ -145,10 +145,27 @@ if __name__ == '__main__':
     print('Total time: ', main_loop_time - main_loop)
     print('Average iteration time: ', np.array(times).mean() * 1000, 'ms')
     print('Final error: ', error_total)
+    ref_traj = np.array(ref_traj)
+    car_states = np.array(car_states)
+    
 
     # Visualization
     ref_traj = np.array(ref_traj)
     car_states = np.array(car_states)
     times = np.array(times)
-    visualize(car_states, ref_traj, obstacles, times, time_step, save=True)
-
+    algo = 'GPI'
+    # algo = 'CEC'
+    fig,ax = plt.subplots(figsize = (6,6))
+    circles = []
+    for obs in obstacles:
+        circles.append(plt.Circle((obs[0], obs[1]), obs[2], color='r', alpha = 0.5))
+    for circle in circles:
+        ax.add_patch(circle)
+    # print(f'ref traj : {ref_traj[:,0]}')
+    ax.scatter(ref_traj[:,0], ref_traj[:,1], marker='x', c='r')
+    ax.plot(car_states[:,0], car_states[:,1], c='b')
+    plt.title(f'Trajectory tracking using {algo}, Parameters : Q : {Q}, q : {q}, R : {R} \n Error in tracking : {error_total}')
+    plt.savefig(f'./plots/{algo}_Q{Q}_q{q}_R{R}_obs0.55.png', bbox_inches = 'tight')
+    plt.show(block = True)
+    
+    visualize(car_states, ref_traj, obstacles, times, time_step, algo = 'GPI', Q= Q,q = q,R = R, save=True)
