@@ -169,7 +169,7 @@ V = np.zeros((num_iters + 1, n_states))
 
 pi = np.zeros((num_iters + 1, n_states)).astype(np.uint8)
 # pi_opt1 = value_iteration_matrix(V,L,p= P)
-pi_opt2 = value_iteration_matrix(V,L,P,1e-9)
+pi_opt2 = value_iteration_matrix(V,L,P,1e-8)
 # pi_opt2 = policy_iteration(V,L,P,pi)
 # rand = np.where(pi_opt1 != pi_opt2)
 print(f'optimal policy : {pi_opt2}')

@@ -86,7 +86,7 @@ if __name__ == '__main__':
     cur_state = np.array([x_init, y_init, theta_init])
     cur_iter = 0
     n_v,n_w = 10,10
-    Q,q,R = 75,30,1
+    Q,q,R = 75,30,2
     # filename = f'pi_{Q}_{q}_{R}_obs=0.55.pkl'
     filename = f'./policy/pi_{Q}_{q}_{R}_obs=0.55.pkl'
     # filename = 'pi_PI.pkl'
