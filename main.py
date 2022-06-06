@@ -8,6 +8,11 @@ import itertools as it
 import pickle
 from state_control_space import *
 import matplotlib.pyplot as plt
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('method', help = 'Enter CEC to run the CEC controller, GPI to run the GPI controller')
+args = parser.parse_args()
+algo = args.method
 # Simulation params
 np.random.seed(10)
 time_step = 0.5 # time between steps in seconds
@@ -81,7 +86,7 @@ if __name__ == '__main__':
     cur_state = np.array([x_init, y_init, theta_init])
     cur_iter = 0
     n_v,n_w = 10,10
-    Q,q,R = 30,25,1
+    Q,q,R = 75,30,1
     # filename = f'pi_{Q}_{q}_{R}_obs=0.55.pkl'
     filename = f'./policy/pi_{Q}_{q}_{R}_obs=0.55.pkl'
     # filename = 'pi_PI.pkl'
@@ -118,8 +123,10 @@ if __name__ == '__main__':
         # Generate control input
         # TODO: Replace this simple controller with your own controller
         # control = simple_controller(cur_state, cur_ref[0])
-        # control = casadi_controller(cur_state, cur_ref)
-        control = U[pi[index]]
+        if algo == 'CEC':
+            control,Q,q,R,N = casadi_controller(cur_state, cur_ref)
+        elif algo =='GPI':
+            control = U[pi[index]]
         v = control[0]
         w = control[1]
         v = np.clip(v, v_min, v_max)
@@ -153,8 +160,6 @@ if __name__ == '__main__':
     ref_traj = np.array(ref_traj)
     car_states = np.array(car_states)
     times = np.array(times)
-    algo = 'GPI'
-    # algo = 'CEC'
     fig,ax = plt.subplots(figsize = (6,6))
     circles = []
     for obs in obstacles:
@@ -164,8 +169,13 @@ if __name__ == '__main__':
     # print(f'ref traj : {ref_traj[:,0]}')
     ax.scatter(ref_traj[:,0], ref_traj[:,1], marker='x', c='r')
     ax.plot(car_states[:,0], car_states[:,1], c='b')
-    plt.title(f'Trajectory tracking using {algo}, Parameters : Q : {Q}, q : {q}, R : {R} \n Error in tracking : {error_total}')
-    plt.savefig(f'./plots/{algo}_Q{Q}_q{q}_R{R}_obs0.55.png', bbox_inches = 'tight')
+    if algo == 'CEC':
+        plt.title(f'Trajectory tracking using {algo}, Parameters : Q : {Q}, q : {q}, R : {R} \n Time Horizon : {N} Error in tracking : {error_total}')
+        plt.savefig(f'./plots/{algo}_Q{Q}_q{q}_R{R}_N{N}obs0.55.png', bbox_inches = 'tight')
+    else:
+        plt.title(f'Trajectory tracking using {algo}, Parameters : Q : {Q}, q : {q}, R : {R} \n Error in tracking : {error_total}')
+        plt.savefig(f'./plots/{algo}_Q{Q}_q{q}_R{R}_obs0.55.png', bbox_inches = 'tight')
+    
     plt.show(block = True)
     
-    visualize(car_states, ref_traj, obstacles, times, time_step, algo = 'GPI', Q= Q,q = q,R = R, save=True)
+    visualize(car_states, ref_traj, obstacles, times, time_step, algo = algo, Q= Q,q = q,R = R, save=True)

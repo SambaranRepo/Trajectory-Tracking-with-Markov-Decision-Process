@@ -3,9 +3,10 @@ from casadi import *
 
 
 def casadi_controller(cur_state, ref):
-     Q = 10*np.eye(2)
-     q = 10
-     R = 5 * np.eye(2)
+     Q,q,R = 7,5,2
+     Q_p = Q*np.eye(2)
+     q_p = q 
+     R_p = R * np.eye(2)
      cur_ref = ref[0]
      error_x = cur_state[0] - cur_ref[0]
      error_y = cur_state[1] - cur_ref[1]
@@ -40,7 +41,7 @@ def casadi_controller(cur_state, ref):
      opts = {'ipopt.print_level': 0, 'print_time': 0, 'ipopt.sb': 'yes'}
      opti.solver('ipopt', opts)
      sol = opti.solve()
-     return sol.value(U)[:,0]
+     return sol.value(U)[:,0], Q,q,R,N
 
 
 #Add the freespace constraint for the position 
