@@ -3,6 +3,12 @@ from casadi import *
 
 
 def casadi_controller(cur_state, ref):
+     '''
+     : Receding time horizon Certainty equivalent controller 
+     : Implementation using CasADi solver
+     : Input --> Current state, current reference, time horizon
+     : Output --> Current control sequence to be executed
+     '''
      Q,q,R = 7,5,2
      Q_p = Q*np.eye(2)
      q_p = q 
@@ -42,8 +48,3 @@ def casadi_controller(cur_state, ref):
      opti.solver('ipopt', opts)
      sol = opti.solve()
      return sol.value(U)[:,0], Q,q,R,N
-
-
-#Add the freespace constraint for the position 
-#Implement exact error dynamics by passing the reference trajectory
-#How to generalise for time horizon T > 3

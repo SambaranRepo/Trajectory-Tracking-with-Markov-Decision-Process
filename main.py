@@ -3,7 +3,7 @@ from time import sleep
 import numpy as np
 from state_control_space import generate_control_space
 from utils import visualize
-from controller import *
+from casadi_controller import *
 import itertools as it
 import pickle
 from state_control_space import *
@@ -85,11 +85,8 @@ if __name__ == '__main__':
     # Initialize state
     cur_state = np.array([x_init, y_init, theta_init])
     cur_iter = 0
-    n_v,n_w = 10,10
-    Q,q,R = 75,30,2
-    # filename = f'pi_{Q}_{q}_{R}_obs=0.55.pkl'
+    Q,q,R = 75,30,1
     filename = f'./policy/pi_{Q}_{q}_{R}_obs=0.55.pkl'
-    # filename = 'pi_PI.pkl'
     with open(filename, 'rb') as f:
         results = pickle.load(f)
         pi,X,e_x,e_y,th,state_table,U = results[0], results[1], results[2], results[3], results[4], results[5], results[6]
@@ -115,10 +112,6 @@ if __name__ == '__main__':
         error_th = th[np.argmin(np.abs(error[2] - th ))]
         index = state_table[((cur_iter*time_step) %50, error_x, error_y, error_th)]
 
-        print(index)
-        # print(pi[index])
-        # print(f'close grid error : {[error_x, error_y, error_th]}')
-        # sleep(10)
         ################################################################
         # Generate control input
         # TODO: Replace this simple controller with your own controller
@@ -176,6 +169,6 @@ if __name__ == '__main__':
         plt.title(f'Trajectory tracking using {algo}, Parameters : Q : {Q}, q : {q}, R : {R} \n Error in tracking : {error_total}')
         plt.savefig(f'./plots/{algo}_Q{Q}_q{q}_R{R}_obs0.55.png', bbox_inches = 'tight')
     
-    plt.show(block = True)
+    plt.show(block = False)
     
     visualize(car_states, ref_traj, obstacles, times, time_step, algo = algo, Q= Q,q = q,R = R, save=True)

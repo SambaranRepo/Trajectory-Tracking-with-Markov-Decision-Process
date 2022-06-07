@@ -57,9 +57,12 @@ for i in range(200):
     cur_ref.append(traj(i))
 
 def check_collision(x,y):
+    '''
+    : check if the state lies inside any of the two circles 
+    : if it falls inside, add a penalty term to the cost
+    '''
     x_c1,y_c1 = -2,-2
     x_c2, y_c2 = 1,2
-    # w_x, w_y = np.random.normal(0,0.04,2)
     w_x,w_y = 0,0
     k = 25 #prev value : 25
     if (x + w_x - x_c1)**2 + (y + w_y  - y_c1)**2 < 0.55**2 :
@@ -115,6 +118,10 @@ else:
         L = pickle.load(f)[0]
 
 def value_iteration_matrix(V,L,p, thresh = 1e-3):
+    '''
+    : function to do Value Iteration for the infinite time horizon tracking problem 
+    : initialized all value functions at each state to 0
+    '''
     gamma = 0.95
     for i in tqdm(range(500000)):
         Q = L + 0.95 * (p @ V[i][:,None])[:,:,-1]
@@ -127,55 +134,16 @@ def value_iteration_matrix(V,L,p, thresh = 1e-3):
             return pi
     return pi
 
-def policy_iteration(V,L,p,pi, thresh = 1e-3):
-    gamma = 0.95
-
-    #policy eval
-    for i in tqdm(range(500)):
-        v_temp = V[i]
-        for k in range(3):
-            v_temp = L[:,pi[i]] + gamma * P[:, pi[i]] @ v_temp
-        Q = L + gamma * (p @ v_temp)
-        V[i+1, :] = np.min(Q, axis = 1)
-        pi[i+1,:] = np.argmin(Q,axis=1)
-        if np.array_equal(V[i], V[i+1]):
-            return pi[i+1]
-    return pi[i+1] 
-
 n_states = P.shape[0]
 num_iters = 5000
 n_controlspace = P.shape[1]
 V = np.zeros((num_iters + 1, n_states))
 
-# @threadpool
-# def assign_V(i, V,ref = cur_ref):
-#     p_x =X[i][1]
-#     p_y = X[i][2]
-#     t = int(X[i][0]//0.5)
-#     penalty = check_collision(p_x + ref[t][0], p_y + ref[t][1])
-#     if penalty != 0:
-#         V[0][i] = 1000
-    
-# async def main():
-#     await asyncio.gather(*[assign_V(i,V) for i in tqdm(range(n_states))])
-
-# print(f'------ Initialising V ---------')
-# loop = asyncio.get_event_loop()
-# loop.run_until_complete(main())
-
-# Q = 100  #Prev :Q= 15, q = 5 for u : 5 X 10; Q = 50, q = 15 for u = 10 X 10
-# q = 10
-# R = 1
-
-pi = np.zeros((num_iters + 1, n_states)).astype(np.uint8)
-# pi_opt1 = value_iteration_matrix(V,L,p= P)
-pi_opt2 = value_iteration_matrix(V,L,P,1e-8)
-# pi_opt2 = policy_iteration(V,L,P,pi)
-# rand = np.where(pi_opt1 != pi_opt2)
-print(f'optimal policy : {pi_opt2}')
+pi = value_iteration_matrix(V,L,P,1e-8)
+print(f'optimal policy : {pi}')
 
 with open(f'./policy/pi_{Q}_{q}_{R}_obs=0.55.pkl', 'wb') as f:
-    x = [pi_opt2, X, e_x, e_y, th, state_table, U]
+    x = [pi, X, e_x, e_y, th, state_table, U]
     pickle.dump(x,f)
 
 with open(f'./step_cost/step_cost_{Q}_{q}_{R}.pkl', 'wb') as f:

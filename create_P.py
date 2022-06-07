@@ -95,23 +95,12 @@ def create_P(i):
 
 async def main():
     await asyncio.gather(*[create_P(i) for i in tqdm(range(n_states))])
-    # await asyncio.gather(*[create_P(i) for i in tqdm(range(10))])
-    # await asyncio.gather(*[create_L(i) for i in tqdm(range(10))])
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
-# print(f'shape of L : {L.shape}')
-print(f'coords1 shape : {len(coords1)}')
-print(f'coords2 shape : {len(coords2)}')
-print(f'coords1 shape : {len(coords3)}')
-print(f'data shape : {len(data)}')
-coords = np.array([coords1, coords2, coords3])
-print(f'coords shape : {coords.shape}')
-p = COO(coords, data, shape = (n_states, n_controlspace,n_states))
-print(f' shape of p : {p.shape}')
 
-# with open('MDP.pkl', 'rb') as f:
-#     p = pickle.load(f)[0]
+coords = np.array([coords1, coords2, coords3])
+p = COO(coords, data, shape = (n_states, n_controlspace,n_states))
 
 with open('MDP.pkl', 'wb') as f:
     save = [p]
