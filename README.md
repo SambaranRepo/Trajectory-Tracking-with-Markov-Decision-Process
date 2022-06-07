@@ -34,8 +34,8 @@ This script contains the CEC controller implementation that is solved using the 
 #### 3. main.py
 
 This script calls our custom controller (either CEC or Value Iteration obtained policy controller) and runs the simulation of the robot trying to follow the reference trajectory. We need to pass as argument CEC to call the CEC controller or GPI to call the GPI controller. Usage : 
-<pre>$python3 main.py CEC</pre> #Call  the CEC controller
-<pre>$python3 main.py GPI</pre> #Call the GPI / Value Iteration obtained optimal policy controller
+<pre>$python3 main.py CEC #Call  the CEC controller</pre> 
+<pre>$python3 main.py GPI #Call the GPI / Value Iteration obtained optimal policy controller</pre> 
 
 ### Directory 
 <pre>
@@ -59,10 +59,10 @@ Results of the trajectory tracking are present in the fig/ and plots/ folders. f
 ## Results 
 ### Trajectory tracking using the CEC Controller 
 <p align='center'>
-<img src="fig/animation_CEC_Q7_q5_R2_obs_0.55.gif>
+<img src="./fig/animation_CEC_Q7_q5_R2_obs_0.55.gif>
 </p>
 
 ### Trajectory tracking using optimal policy obtained using Value Iteration Algorithm
 <p align='center'>
-<img src="fig/animation_GPI_Q75_q30_R1_obs=0.55.gif>
+<img src="./fig/animation_GPI_Q75_q30_R1_obs=0.55.gif>
 </p>
