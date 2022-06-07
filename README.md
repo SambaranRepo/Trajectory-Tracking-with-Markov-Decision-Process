@@ -59,10 +59,10 @@ Results of the trajectory tracking are present in the fig/ and plots/ folders. f
 ## Results 
 ### Trajectory tracking using the CEC Controller 
 <p align='center'>
-<img src="./fig/animation_CEC_Q7_q5_R2_obs_0.55.gif>
+<img src="./fig/animation_CEC_Q7_q5_R2_obs_0.55.gif">
 </p>
 
 ### Trajectory tracking using optimal policy obtained using Value Iteration Algorithm
 <p align='center'>
-<img src="./fig/animation_GPI_Q75_q30_R1_obs=0.55.gif>
+<img src="./fig/animation_GPI_Q75_q30_R1_obs=0.55.gif">
 </p>
